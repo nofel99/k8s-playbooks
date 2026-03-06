@@ -1,0 +1,67 @@
+---
+# playbook: k8s-install.yml
+# Install Kubernetes packages on Ubuntu
+- hosts: k8s_nodes
+  become: true
+
+  vars:
+    k8s_version: "1.35"
+    k8s_package_version: "1.35.2-1.1"
+
+  tasks:
+    - name: Install prerequisite packages
+      ansible.builtin.apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gpg
+        state: present
+        update_cache: true
+
+    - name: Create keyrings directory
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Download Kubernetes GPG key
+      ansible.builtin.get_url:
+        url: "https://pkgs.k8s.io/core:/stable:/v{{ k8s_version }}/deb/Release.key"
+        dest: /tmp/kubernetes-release.key
+        mode: '0644'
+
+    - name: Dearmor and install Kubernetes GPG key
+      ansible.builtin.command:
+        cmd: gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg /tmp/kubernetes-release.key
+        creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+    - name: Add Kubernetes APT repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v{{ k8s_version }}/deb/ /"
+        filename: kubernetes
+        state: present
+
+    - name: Install Kubernetes packages
+      ansible.builtin.apt:
+        name:
+          - "kubelet={{ k8s_package_version }}"
+          - "kubeadm={{ k8s_package_version }}"
+          - "kubectl={{ k8s_package_version }}"
+        state: present
+        update_cache: true
+
+    - name: Hold Kubernetes packages to prevent auto-upgrade
+      ansible.builtin.dpkg_selections:
+        name: "{{ item }}"
+        selection: hold
+      loop:
+        - kubelet
+        - kubeadm
+        - kubectl
+
+    - name: Enable and start kubelet
+      ansible.builtin.systemd:
+        name: kubelet
+        state: started
+        enabled: true

@@ -1,0 +1,18 @@
+---
+- hosts: k8s_nodes
+  become: yes
+  tasks:
+    - name: Create crictl config
+      copy:
+        dest: /etc/crictl.yaml
+        content: |
+          runtime-endpoint: unix:///run/containerd/containerd.sock
+          image-endpoint: unix:///run/containerd/containerd.sock
+          timeout: 10
+          debug: false
+    - name: Set crictl config permissions
+      file:
+        path: /etc/crictl.yaml
+        owner: root
+        group: root
+        mode: '0644'
