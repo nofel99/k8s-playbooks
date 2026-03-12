@@ -23,8 +23,8 @@ Container runtime: containerd. CNI: Flannel.
 │   ├── 3-containerd-install.yml  # Установка containerd
 │   ├── 4-crictl-config.yml  # Конфигурация crictl
 │   ├── 5-init-control.yml   # Инициализация control plane
-│   ├── 6-cni.yml            # Установка Flannel CNI (вместо Calico)
 │   ├── 6-calico.yml         # Установка Calico CNI (вместо Flannel)
+│   ├── 6-cni.yml            # Установка Flannel CNI (вместо Calico)
 │   ├── 7-join-workers.yml   # Подключение worker nodes
 │   └── 8-external-ip-ssl.yml # Пересоздание сертификата с внешним IP
 ├── site.yml                 # Запуск всех плейбуков по порядку
