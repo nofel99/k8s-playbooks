@@ -1,10 +1,6 @@
 - name: Regenerate apiserver certificate with external IP
   hosts: k8s_masters
   become: true
-  vars:
-    external_ip: "158.160.223.220"
-    internal_ip: "10.10.101.28"
-
   tasks:
     - name: Remove old apiserver certificates
       ansible.builtin.file:
@@ -18,13 +14,20 @@
       ansible.builtin.command:
         cmd: >
           kubeadm init phase certs apiserver
-          --apiserver-cert-extra-sans={{ external_ip }},{{ internal_ip }},vm-1
+          --apiserver-cert-extra-sans={{ external_ip }},{{ internal_ip }},{{ inventory_hostname }}
+
 
     - name: Restart kube-apiserver
       ansible.builtin.shell: |
         crictl stop $(crictl ps --name kube-apiserver -q)
         crictl rm $(crictl ps -a --name kube-apiserver -q)
       ignore_errors: true
+
+    - name: Wait for kube-apiserver to be ready
+      ansible.builtin.wait_for:
+        port: 6443
+        delay: 5
+        timeout: 60
 
     - name: Fetch updated kubeconfig
       ansible.builtin.fetch:

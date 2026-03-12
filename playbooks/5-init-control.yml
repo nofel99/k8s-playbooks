@@ -3,10 +3,6 @@
 # Initialize the Kubernetes control plane on the first master node
 - hosts: k8s_masters
   become: true
-  vars:
-    pod_network_cidr: "10.244.0.0/16"
-    service_cidr: "10.96.0.0/12"
-    k8s_version: "1.35.2"
 
   handlers:
     - name: restart containerd
@@ -37,17 +33,6 @@
     - name: Flush handlers to restart containerd before kubeadm
       ansible.builtin.meta: flush_handlers
 
-    # ── crictl ───────────────────────────────────────────────
-    - name: Create crictl config
-      ansible.builtin.copy:
-        dest: /etc/crictl.yaml
-        content: |
-          runtime-endpoint: unix:///run/containerd/containerd.sock
-          image-endpoint: unix:///run/containerd/containerd.sock
-          timeout: 10
-          debug: false
-        mode: '0644'
-
     # ── kubernetes control plane ─────────────────────────────
     - name: Check if cluster is already initialized
       ansible.builtin.stat:
@@ -60,7 +45,7 @@
           kubeadm init
           --pod-network-cidr={{ pod_network_cidr }}
           --service-cidr={{ service_cidr }}
-          --kubernetes-version={{ k8s_version }}
+          --kubernetes-version={{ k8s_kubeadm_version }}          
       register: kubeadm_init
       when: not k8s_admin_conf.stat.exists
 
@@ -76,15 +61,3 @@
         dest: /root/.kube/config
         remote_src: true
         mode: '0600'
-
-    - name: Generate join command
-      ansible.builtin.command:
-        cmd: kubeadm token create --print-join-command
-      register: join_command
-      changed_when: false
-
-    - name: Store join command as fact
-      ansible.builtin.set_fact:
-        k8s_join_command: "{{ join_command.stdout }}"
-
-

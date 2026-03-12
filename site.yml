@@ -1,0 +1,10 @@
+---
+- import_playbook: playbooks/0-timezone.yml
+- import_playbook: playbooks/1-k8s-pre.yml
+- import_playbook: playbooks/2-k8s-install.yml
+- import_playbook: playbooks/3-containerd-install.yml
+- import_playbook: playbooks/4-crictl-config.yml
+- import_playbook: playbooks/5-init-control.yml
+- import_playbook: playbooks/6-cni.yml
+- import_playbook: playbooks/7-join-workers.yml
+- import_playbook: playbooks/8-external-ip-ssl.yml

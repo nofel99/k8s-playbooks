@@ -1,11 +1,11 @@
 ---
 # playbook: cni.yml
 - hosts: k8s_masters
-  become: yes
+  become: true
   tasks:
     - name: Install Flannel CNI
       ansible.builtin.command:
-        cmd: kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+        cmd: kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/{{ flannel_version }}/Documentation/kube-flannel.yml
       environment:
         KUBECONFIG: /etc/kubernetes/admin.conf
       register: flannel_result

@@ -4,10 +4,6 @@
 - hosts: k8s_nodes
   become: true
 
-  vars:
-    k8s_version: "1.35"
-    k8s_package_version: "1.35.2-1.1"
-
   tasks:
     - name: Install prerequisite packages
       ansible.builtin.apt:
@@ -35,6 +31,11 @@
       ansible.builtin.command:
         cmd: gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg /tmp/kubernetes-release.key
         creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+    - name: Remove temporary GPG key file
+      ansible.builtin.file:
+        path: /tmp/kubernetes-release.key
+        state: absent
 
     - name: Add Kubernetes APT repository
       ansible.builtin.apt_repository:

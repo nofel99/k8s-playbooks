@@ -1,93 +1,168 @@
-# k8s-playbooks
+# Ansible — Kubernetes Cluster Setup
 
+Автоматизированное развёртывание Kubernetes кластера на Ubuntu с помощью Ansible.
 
+Кластер: 1 control plane (vm-1) + 2 worker nodes (vm-2, vm-3).  
+Container runtime: containerd. CNI: Flannel.
 
-## Getting started
+---
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
-
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-* [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+## Структура проекта
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.deva3.online/boris/k8s-playbooks.git
-git branch -M main
-git push -uf origin main
+.
+├── ansible.cfg              # Конфигурация Ansible (inventory по умолчанию)
+├── group_vars/
+│   ├── all.yml              # Общие переменные (версии, CIDR)
+│   └── k8s_masters.yml      # IP-адреса control plane
+├── inventory.yml            # Хосты и группы
+├── playbooks/
+│   ├── 0-timezone.yml       # Настройка timezone
+│   ├── 1-k8s-pre.yml        # Системные prerequisites
+│   ├── 2-k8s-install.yml    # Установка kubeadm, kubelet, kubectl
+│   ├── 3-containerd-install.yml  # Установка containerd
+│   ├── 4-crictl-config.yml  # Конфигурация crictl
+│   ├── 5-init-control.yml   # Инициализация control plane
+│   ├── 6-cni.yml            # Установка Flannel CNI
+│   ├── 7-join-workers.yml   # Подключение worker nodes
+│   └── 8-external-ip-ssl.yml # Пересоздание сертификата с внешним IP
+├── site.yml                 # Запуск всех плейбуков по порядку
+└── README.md
 ```
 
-## Integrate with your tools
+---
 
-* [Set up project integrations](https://gitlab.deva3.online/boris/k8s-playbooks/-/settings/integrations)
+## Требования
 
-## Collaborate with your team
+**На управляющей машине:**
+- Ansible >= 2.12
+- Python 3.12
+- SSH-ключ `~/.ssh/yc-dev` с доступом к нодам
+- `yc` CLI (опционально, для получения IP из Yandex Cloud)
 
-* [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+**На нодах:**
+- Ubuntu 22.04 / 24.04
+- Доступ по SSH от root
+- Интернет для загрузки пакетов
 
-## Test and Deploy
+**Ansible коллекции:**
+```bash
+ansible-galaxy collection install community.general
+```
 
-Use the built-in continuous integration in GitLab.
+---
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+## Переменные
 
-***
+### group_vars/all.yml
+| Переменная | Описание |
+|---|---|
+| `k8s_version` | Версия для APT репозитория (например `1.35`) |
+| `k8s_package_version` | Версия пакетов apt (например `1.35.2-1.1`) |
+| `k8s_kubeadm_version` | Версия для kubeadm init (например `1.35.2`) |
+| `pod_network_cidr` | CIDR для pod сети (`10.244.0.0/16`) |
+| `service_cidr` | CIDR для service сети (`10.96.0.0/12`) |
+| `flannel_version` | Версия Flannel CNI (например `v0.26.2`) |
 
-# Editing this README
+### group_vars/k8s_masters.yml
+| Переменная | Описание |
+|---|---|
+| `external_ip` | Внешний IP control plane ноды |
+| `internal_ip` | Внутренний IP control plane ноды |
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+---
 
-## Suggestions for a good README
+## Быстрый старт
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+**1. Клонировать репозиторий:**
+```bash
+git clone <repo-url> /opt/ansible
+cd /opt/ansible
+```
 
-## Name
-Choose a self-explaining name for your project.
+**2. Настроить переменные:**
+```bash
+# Версии Kubernetes
+vim group_vars/all.yml
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+# IP-адреса control plane
+vim group_vars/k8s_masters.yml
+```
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+**3. Проверить доступность нод:**
+```bash
+ansible all -m ping
+```
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+**4. Запустить полную установку кластера:**
+```bash
+ansible-playbook site.yml
+```
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+**5. Запустить отдельный плейбук:**
+```bash
+ansible-playbook playbooks/5-init-control.yml
+```
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+---
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+## Описание плейбуков
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+### 0-timezone.yml
+Устанавливает timezone `Asia/Irkutsk` на всех нодах.  
+Группа: `k8s_nodes`
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+### 1-k8s-pre.yml
+Системные prerequisites для Kubernetes:
+- отключение swap
+- загрузка модулей ядра `overlay`, `br_netfilter`
+- настройка sysctl параметров для сети
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+Группа: `k8s_nodes`
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+### 2-k8s-install.yml
+Установка Kubernetes компонентов:
+- добавление официального APT репозитория
+- установка `kubelet`, `kubeadm`, `kubectl` зафиксированных версий
+- hold пакетов от автообновления
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+Группа: `k8s_nodes`
 
-## License
-For open source projects, say how it is licensed.
+### 3-containerd-install.yml
+Установка и настройка containerd как container runtime:
+- генерация дефолтного конфига
+- включение `SystemdCgroup = true`
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+Группа: `k8s_nodes`
+
+### 4-crictl-config.yml
+Настройка `crictl` для работы с containerd через unix socket.  
+Группа: `k8s_nodes`
+
+### 5-init-control.yml
+Инициализация control plane:
+- `kubeadm init` с указанием CIDR и версии
+- настройка `~/.kube/config` для root
+
+Группа: `k8s_masters`
+
+### 6-cni.yml
+Установка Flannel CNI через `kubectl apply`.  
+Версия фиксируется переменной `flannel_version`.  
+Группа: `k8s_masters`
+
+### 7-join-workers.yml
+Подключение worker нод к кластеру:
+- генерация join-команды на мастере
+- выполнение join на каждой worker ноде (с проверкой — не джойнит повторно)
+
+Группы: `k8s_masters`, `k8s_workers`
+
+### 8-external-ip-ssl.yml
+Пересоздание сертификата kube-apiserver с добавлением внешнего IP в SAN:
+- удаление старых сертификатов
+- генерация новых через `kubeadm init phase certs`
+- перезапуск apiserver через crictl
+- скачивание обновлённого kubeconfig на управляющую машину
+
+Группа: `k8s_masters`

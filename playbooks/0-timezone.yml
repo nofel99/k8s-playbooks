@@ -1,7 +1,8 @@
 ---
-- hosts: k8s_nodes
-  become: yes
+- name: Set timezone on all nodes
+  hosts: k8s_nodes
+  become: true
   tasks:
-    - name: set timezone
-      timezone:
+    - name: Set timezone to Asia/Irkutsk
+      community.general.timezone:
         name: Asia/Irkutsk

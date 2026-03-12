@@ -8,7 +8,8 @@
     - name: Disable swap (required for kubelet)
       ansible.builtin.command:
         cmd: swapoff -a
-      changed_when: true
+      when: ansible_swaptotal_mb > 0
+      changed_when: ansible_swaptotal_mb > 0
 
     - name: Remove swap entries from fstab
       ansible.builtin.lineinfile:
