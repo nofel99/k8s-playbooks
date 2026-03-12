@@ -158,7 +158,7 @@ ansible-playbook playbooks/5-init-control.yml
 
 ### 6-calico.yml
 Установка Calico CNI через kubectl apply.
-Версия фиксируется переменной `calico_version`. 
+Версия фиксируется переменной `calico_version`.  
 Группа: `k8s_masters`
 
 ### 6-cni.yml
