@@ -38,7 +38,6 @@ Container runtime: containerd. CNI: Flannel.
 - Ansible >= 2.12
 - Python 3.12
 - SSH-ключ `~/.ssh/yc-dev` с доступом к нодам
-- `yc` CLI (опционально, для получения IP из Yandex Cloud)
 
 **На нодах:**
 - Ubuntu 22.04 / 24.04
