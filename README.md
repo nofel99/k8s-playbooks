@@ -23,7 +23,8 @@ Container runtime: containerd. CNI: Flannel.
 │   ├── 3-containerd-install.yml  # Установка containerd
 │   ├── 4-crictl-config.yml  # Конфигурация crictl
 │   ├── 5-init-control.yml   # Инициализация control plane
-│   ├── 6-cni.yml            # Установка Flannel CNI
+│   ├── 6-cni.yml            # Установка Flannel CNI (вместо Calico)
+│   ├── 6-calico.yml         # Установка Calico CNI (вместо Flannel)
 │   ├── 7-join-workers.yml   # Подключение worker nodes
 │   └── 8-external-ip-ssl.yml # Пересоздание сертификата с внешним IP
 ├── site.yml                 # Запуск всех плейбуков по порядку
@@ -62,6 +63,7 @@ ansible-galaxy collection install community.general
 | `pod_network_cidr` | CIDR для pod сети (`10.244.0.0/16`) |
 | `service_cidr` | CIDR для service сети (`10.96.0.0/12`) |
 | `flannel_version` | Версия Flannel CNI (например `v0.26.2`) |
+| `calico_version` | Версия Flannel CNI (например `v3.29.3`) |
 
 ### group_vars/k8s_masters.yml
 | Переменная | Описание |
@@ -100,6 +102,9 @@ ansible all -m ping
 ```
 
 **4. Запустить полную установку кластера:**
+по-умолчанию в site.yml прописан плейбук Flannel,
+если нужен Calico, то отредактируй site.yml
+
 ```bash
 ansible-playbook site.yml
 ```
@@ -155,6 +160,13 @@ ansible-playbook playbooks/5-init-control.yml
 Установка Flannel CNI через `kubectl apply`.  
 Версия фиксируется переменной `flannel_version`.  
 Группа: `k8s_masters`
+
+### 6-calico.yml
+6-cni.yml
+Установка Calico CNI через kubectl apply.
+Версия фиксируется переменной calico_version.
+Группа: k8s_masters
+
 
 ### 7-join-workers.yml
 Подключение worker нод к кластеру:
