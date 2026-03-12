@@ -69,6 +69,12 @@ ansible-galaxy collection install community.general
 | `external_ip` | Внешний IP control plane ноды |
 | `internal_ip` | Внутренний IP control plane ноды |
 
+По умолчанию kubeadm выписывает сертификат kube-apiserver только для внутренних адресов кластера. Если ты подключаешься к кластеру снаружи (например со своего ноутбука через kubectl), то TLS соединение падает с ошибкой — внешний IP не прописан в сертификате.
+Плейбук пересоздаёт сертификат и добавляет в поле SAN (Subject Alternative Names) оба адреса:
+
+external_ip — чтобы подключаться снаружи через интернет
+internal_ip — чтобы работало внутри сети Yandex Cloud
+
 ---
 
 ## Быстрый старт
