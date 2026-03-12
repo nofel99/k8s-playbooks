@@ -1,0 +1,12 @@
+---
+# playbook: 6-calico.yml
+- hosts: k8s_masters
+  become: true
+  tasks:
+    - name: Install Calico CNI
+      ansible.builtin.command:
+        cmd: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/{{ calico_version }}/manifests/calico.yaml
+      environment:
+        KUBECONFIG: /etc/kubernetes/admin.conf
+      register: calico_result
+      changed_when: "'created' in calico_result.stdout or 'configured' in calico_result.stdout"
