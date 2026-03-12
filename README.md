@@ -147,6 +147,7 @@ ansible-playbook playbooks/5-init-control.yml
 
 ### 4-crictl-config.yml
 Настройка `crictl` для работы с containerd через unix socket.  
+
 Группа: `k8s_nodes`
 
 ### 5-init-control.yml
@@ -159,11 +160,13 @@ ansible-playbook playbooks/5-init-control.yml
 ### 6-calico.yml
 Установка Calico CNI через kubectl apply.
 Версия фиксируется переменной `calico_version`.  
+
 Группа: `k8s_masters`
 
 ### 6-cni.yml
 Установка Flannel CNI через `kubectl apply`.  
 Версия фиксируется переменной `flannel_version`.  
+
 Группа: `k8s_masters`
 
 ### 7-join-workers.yml
