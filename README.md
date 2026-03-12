@@ -156,17 +156,15 @@ ansible-playbook playbooks/5-init-control.yml
 
 Группа: `k8s_masters`
 
-### 6-cni.yml
-Установка Flannel CNI через `kubectl apply`.  
-Версия фиксируется переменной `flannel_version`.  
-Группа: `k8s_masters`
-
 ### 6-calico.yml
-6-cni.yml
 Установка Calico CNI через kubectl apply.
 Версия фиксируется переменной calico_version.
 Группа: k8s_masters
 
+### 6-cni.yml
+Установка Flannel CNI через `kubectl apply`.  
+Версия фиксируется переменной `flannel_version`.  
+Группа: `k8s_masters`
 
 ### 7-join-workers.yml
 Подключение worker нод к кластеру:
