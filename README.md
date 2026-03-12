@@ -75,7 +75,7 @@ ansible-galaxy collection install community.general
 
 **1. Клонировать репозиторий:**
 ```bash
-git clone <repo-url> /opt/ansible
+git clone git@github.com:nofel99/k8s-playbooks.git /opt/ansible
 cd /opt/ansible
 ```
 
